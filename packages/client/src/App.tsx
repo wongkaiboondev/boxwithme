@@ -1,35 +1,48 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
+import { socket } from "./socket";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [message, setMessage] = useState("");
+  const [log, setLog] = useState([]);
+  console.log("🚀 ~ App ~ log:", log);
+
+  socket.on("receivedMessage", (body) => {
+    console.log("receivedMessage");
+    setLog([...log, body]);
+    console.log(body);
+  });
+
+  const handleEmit = (event: any) => {
+    event.preventDefault(); // Prevent the default form submission behavior
+    console.log(message);
+    socket.emit("sendMessage", message);
+    setLog([...log, message]);
+  };
 
   return (
     <>
+      <form onSubmit={handleEmit}>
+        <input
+          type="text"
+          name="message"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+        />
+        <button type="submit">Send</button>
+      </form>
+
       <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <div>Chat Log</div>
+        <div>
+          {log.length > 0 &&
+            log.map((item) => {
+              return <div>{item}</div>;
+            })}
+        </div>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
