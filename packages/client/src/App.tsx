@@ -1,19 +1,46 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { socket } from "./socket";
 
-function App() {
+const App = () => {
   const [message, setMessage] = useState("");
-  const [prevMessage, setPrevMessage] = useState("");
-  const [log] = useState<string[]>([]);
-  socket.on("receivedMessage", (body) => {
-    log.push(body);
-  });
+  const [total, setTotal] = useState(0);
+  const [joinRoom, setJoinRoom] = useState("");
+  const [chats, setChats] = useState([]);
+
+  useEffect(() => {
+    console.log("useEffect");
+    socket.connect();
+    console.log("connected");
+    socket.on("connect", () => {
+      console.log("socket id", socket.id);
+      socket.emit("joinRoom", socket.id);
+    });
+
+    socket.on("whoJoined", (msg: string) => setJoinRoom(msg));
+    socket.on("totalUser", (msg: number) => setTotal(msg));
+
+    socket.on("receivedMessage", (msg: string) =>
+      setChats((prev) => [...prev, msg])
+    );
+
+    return () => {
+      socket.off("totalUser");
+      socket.off("joinRoom");
+      socket.off("whoJoined");
+      socket.off("receivedMessage");
+      socket.disconnect();
+      console.log("disconnect");
+    };
+  }, []);
+
+  console.log("outside render");
+  console.log("joinRoom", joinRoom);
+  console.log("chats", chats);
 
   const handleEmit = (event: any) => {
-    event.preventDefault(); // Prevent the default form submission behavior
+    event.preventDefault();
+    console.log("handleEmit", message);
     socket.emit("sendMessage", message);
-    log.push(message);
-    setPrevMessage(message);
     setMessage("");
   };
 
@@ -25,16 +52,17 @@ function App() {
     return <div className="text-right">{item}</div>;
   };
 
-  console.log(log);
-
   return (
     <div className="flex items-center flex-col h-full bg-indigo-50 justify-between w-full">
-      <div className="outline outline-offset-2 outline-pink-500 flex items-center flex-col h-full justify-between w-4/5">
+      <div className="outline outline-offset-2 outline-pink-500 flex items-center flex-col  justify-between w-4/5">
         <div className="text-left w-full">
           <h2 className="pt-4 bg-indigo-100">Box With Me</h2>
+          <div>{total} user online</div>
           <div id="chats" className="mt-4 text-left">
-            {log.length > 0 &&
-              log.map((item, index) => {
+            <div>{joinRoom}</div>
+            <div>Chats: </div>
+            {chats.length > 0 &&
+              chats.map((item, index) => {
                 if (index % 2) {
                   return renderLeftMessage(item);
                 } else {
@@ -66,6 +94,6 @@ function App() {
       </div>
     </div>
   );
-}
+};
 
 export default App;

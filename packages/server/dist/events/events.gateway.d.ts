@@ -1,7 +1,9 @@
-import { OnModuleInit } from '@nestjs/common';
-import { Server } from 'socket.io';
-export declare class EventsGateway implements OnModuleInit {
+import { OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+export declare class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     server: Server;
-    onModuleInit(): void;
-    handleEvent(body: any): any;
+    handleConnection(client: Socket): void;
+    handleDisconnect(client: Socket): void;
+    handleMessage(msg: any): void;
+    handleJoinRoom(msg: any, client: Socket): void;
 }

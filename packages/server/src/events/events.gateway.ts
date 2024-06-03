@@ -1,32 +1,43 @@
-import { OnModuleInit } from '@nestjs/common';
 import {
+  OnGatewayConnection,
+  OnGatewayDisconnect,
   MessageBody,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
+  ConnectedSocket,
 } from '@nestjs/websockets';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
     origin: '*',
   },
 })
-export class EventsGateway implements OnModuleInit {
+export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  onModuleInit() {
-    this.server.on('connection', (socket) => {
-      console.log('id', socket.id);
-      console.log('connected');
-    });
+  handleConnection(client: Socket) {
+    console.log(`clientId: ${client.id} connected`);
+    this.server.emit('totalUser', this.server.of('/').sockets.size);
+  }
+
+  handleDisconnect(client: Socket) {
+    console.log(`clientId: ${client.id} disconnect`);
+    this.server.emit('totalUser', this.server.of('/').sockets.size);
   }
 
   @SubscribeMessage('sendMessage')
-  handleEvent(@MessageBody() body: any) {
-    console.log(body);
-    this.server.emit('receivedMessage', body);
-    return body;
+  handleMessage(@MessageBody() msg: any) {
+    console.log(msg);
+    this.server.emit('receivedMessage', msg);
+  }
+
+  @SubscribeMessage('joinRoom')
+  handleJoinRoom(@MessageBody() msg: any, @ConnectedSocket() client: Socket) {
+    console.log(msg);
+    this.server.emit('whoJoined', `${client.id} had join room`);
+    console.log(`${client.id} had join room`);
   }
 }

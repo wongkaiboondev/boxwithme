@@ -16,16 +16,22 @@ exports.EventsGateway = void 0;
 const websockets_1 = require("@nestjs/websockets");
 const socket_io_1 = require("socket.io");
 let EventsGateway = class EventsGateway {
-    onModuleInit() {
-        this.server.on('connection', (socket) => {
-            console.log('id', socket.id);
-            console.log('connected');
-        });
+    handleConnection(client) {
+        console.log(`clientId: ${client.id} connected`);
+        this.server.emit('totalUser', this.server.of('/').sockets.size);
     }
-    handleEvent(body) {
-        console.log(body);
-        this.server.emit('receivedMessage', body);
-        return body;
+    handleDisconnect(client) {
+        console.log(`clientId: ${client.id} disconnect`);
+        this.server.emit('totalUser', this.server.of('/').sockets.size);
+    }
+    handleMessage(msg) {
+        console.log(msg);
+        this.server.emit('receivedMessage', msg);
+    }
+    handleJoinRoom(msg, client) {
+        console.log(msg);
+        this.server.emit('whoJoined', `${client.id} had join room`);
+        console.log(`${client.id} had join room`);
     }
 };
 exports.EventsGateway = EventsGateway;
@@ -39,7 +45,15 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], EventsGateway.prototype, "handleEvent", null);
+], EventsGateway.prototype, "handleMessage", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('joinRoom'),
+    __param(0, (0, websockets_1.MessageBody)()),
+    __param(1, (0, websockets_1.ConnectedSocket)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, socket_io_1.Socket]),
+    __metadata("design:returntype", void 0)
+], EventsGateway.prototype, "handleJoinRoom", null);
 exports.EventsGateway = EventsGateway = __decorate([
     (0, websockets_1.WebSocketGateway)({
         cors: {
