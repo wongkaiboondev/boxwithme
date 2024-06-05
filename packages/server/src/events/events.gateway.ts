@@ -19,25 +19,26 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server: Server;
 
   handleConnection(client: Socket) {
+    const totalUserOnline = this.server.of('/').sockets.size;
+    this.server.emit('totalUser', totalUserOnline);
     console.log(`clientId: ${client.id} connected`);
-    this.server.emit('totalUser', this.server.of('/').sockets.size);
   }
 
   handleDisconnect(client: Socket) {
+    const totalUserOnline = this.server.of('/').sockets.size;
+    this.server.emit('totalUser', totalUserOnline);
     console.log(`clientId: ${client.id} disconnect`);
-    this.server.emit('totalUser', this.server.of('/').sockets.size);
   }
 
   @SubscribeMessage('sendMessage')
-  handleMessage(@MessageBody() msg: any) {
+  handleMessage(@MessageBody() msg: any, @ConnectedSocket() client: Socket) {
     console.log(msg);
-    this.server.emit('receivedMessage', msg);
+    client.broadcast.emit('receivedMessage', msg);
   }
 
   @SubscribeMessage('joinRoom')
   handleJoinRoom(@MessageBody() msg: any, @ConnectedSocket() client: Socket) {
-    console.log(msg);
-    this.server.emit('whoJoined', `${client.id} had join room`);
+    client.broadcast.emit('whoJoined', `${client.id} had join room`);
     console.log(`${client.id} had join room`);
   }
 }
