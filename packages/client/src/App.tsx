@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { socket } from "./socket";
 
+type ChatMessage = { msg: string; sender: string };
+
 const App = () => {
   const [message, setMessage] = useState("");
   const [total, setTotal] = useState(0);
   const [joinRoom, setJoinRoom] = useState("");
-  const [chats, setChats] = useState([]);
+  const [chats, setChats] = useState<ChatMessage[]>([]);
 
   useEffect(() => {
-    console.log("useEffect");
     socket.connect();
     console.log("connected");
     socket.on("connect", () => {
@@ -18,10 +19,13 @@ const App = () => {
 
     socket.on("whoJoined", (msg: string) => setJoinRoom(msg));
     socket.on("totalUser", (msg: number) => setTotal(msg));
-
-    socket.on("receivedMessage", (msg: string) =>
-      setChats((prev) => [...prev, msg])
-    );
+    socket.on("receivedMessage", (msg: string) => {
+      const receiver = {
+        msg: msg,
+        sender: "other",
+      };
+      setChats([...chats, receiver]);
+    });
 
     return () => {
       socket.off("totalUser");
@@ -31,26 +35,36 @@ const App = () => {
       socket.disconnect();
       console.log("disconnect");
     };
-  }, []);
-
-  console.log("outside render");
-  console.log("joinRoom", joinRoom);
-  console.log("chats", chats);
+  }, [chats]);
 
   const handleEmit = (event: any) => {
     event.preventDefault();
-    console.log("handleEmit", message);
+    const sender = {
+      msg: message,
+      sender: "me",
+    };
     socket.emit("sendMessage", message);
+    setChats([...chats, sender]);
     setMessage("");
   };
 
-  const renderLeftMessage = (item: any) => {
-    return <div className="text-left">{item}</div>;
+  const renderLeftMessage = (item: any, index: number) => {
+    return (
+      <div className="text-left" key={index}>
+        Sender: {item.msg}
+      </div>
+    );
   };
 
-  const renderRightMessage = (item: any) => {
-    return <div className="text-right">{item}</div>;
+  const renderRightMessage = (item: any, index: number) => {
+    return (
+      <div className="text-right" key={index}>
+        {item.msg} :Me
+      </div>
+    );
   };
+
+  console.log("joinRoom", joinRoom);
 
   return (
     <div className="flex items-center flex-col h-full bg-indigo-50 justify-between w-full">
@@ -63,10 +77,10 @@ const App = () => {
             <div>Chats: </div>
             {chats.length > 0 &&
               chats.map((item, index) => {
-                if (index % 2) {
-                  return renderLeftMessage(item);
+                if (item.sender === "other") {
+                  return renderLeftMessage(item, index);
                 } else {
-                  return renderRightMessage(item);
+                  return renderRightMessage(item, index);
                 }
               })}
           </div>
