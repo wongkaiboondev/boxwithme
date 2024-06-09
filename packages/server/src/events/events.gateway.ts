@@ -36,9 +36,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.broadcast.emit('receivedMessage', msg);
   }
 
-  @SubscribeMessage('joinRoom')
-  handleJoinRoom(@MessageBody() msg: any, @ConnectedSocket() client: Socket) {
-    client.broadcast.emit('whoJoined', `${client.id} had join room`);
-    console.log(`${client.id} had join room`);
-  }
+  // @SubscribeMessage('joinRoom')
+  // handleJoinRoom(@MessageBody() msg: any, @ConnectedSocket() client: Socket) {
+  //   client.broadcast.emit('whoJoined', `${client.id} had join room`);
+  //   console.log(`${client.id} had join room`);
+  // }
 }

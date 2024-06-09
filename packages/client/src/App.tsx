@@ -11,10 +11,10 @@ const App = () => {
 
   useEffect(() => {
     socket.connect();
-    console.log("connected");
+    // console.log("connected");
     socket.on("connect", () => {
-      console.log("socket id", socket.id);
-      socket.emit("joinRoom", socket.id);
+      // console.log("socket id", socket.id);
+      // socket.emit("joinRoom", socket.id);
     });
 
     socket.on("whoJoined", (msg: string) => setJoinRoom(msg));
@@ -33,7 +33,7 @@ const App = () => {
       socket.off("whoJoined");
       socket.off("receivedMessage");
       socket.disconnect();
-      console.log("disconnect");
+      // console.log("disconnect");
     };
   }, [chats]);
 
@@ -48,62 +48,82 @@ const App = () => {
     setMessage("");
   };
 
-  const renderLeftMessage = (item: any, index: number) => {
+  const ChatBubble = ({ item, index }: any) => {
+    const isOther = item.sender === "other";
     return (
-      <div className="text-left" key={index}>
-        Sender: {item.msg}
+      <div
+        className={`first:pt-4 pt-2 flex ${isOther ? "flex-row" : "flex-row-reverse"}`}
+        key={index}
+      >
+        {isOther ? (
+          <div className="items-center gap-x-2 flex">
+            <img
+              className="w-10 h-10 rounded-full"
+              src="src/assets/me-sloth.png"
+              alt="Rounded avatar"
+            ></img>
+            <div className="bg-indigo-100 p-2 rounded-r-lg rounded-b-lg">
+              {item.msg}
+            </div>
+          </div>
+        ) : (
+          <div className="items-center gap-x-2 flex">
+            <div className="bg-indigo-100 p-2 rounded-l-lg rounded-b-lg">
+              {item.msg}
+            </div>
+            <img
+              className="w-10 h-10 rounded-full"
+              src="src/assets/sender-snowman.png"
+              alt="Rounded avatar"
+            ></img>
+          </div>
+        )}
       </div>
     );
   };
-
-  const renderRightMessage = (item: any, index: number) => {
-    return (
-      <div className="text-right" key={index}>
-        {item.msg} :Me
-      </div>
-    );
-  };
-
-  console.log("joinRoom", joinRoom);
 
   return (
-    <div className="flex items-center flex-col h-full bg-indigo-50 justify-between w-full">
-      <div className="outline outline-offset-2 outline-pink-500 flex items-center flex-col  justify-between w-4/5">
-        <div className="text-left w-full">
-          <h2 className="pt-4 bg-indigo-100">Box With Me</h2>
-          <div>{total} user online</div>
-          <div id="chats" className="mt-4 text-left">
-            <div>{joinRoom}</div>
-            <div>Chats: </div>
-            {chats.length > 0 &&
-              chats.map((item, index) => {
-                if (item.sender === "other") {
-                  return renderLeftMessage(item, index);
-                } else {
-                  return renderRightMessage(item, index);
-                }
-              })}
-          </div>
-        </div>
-        <div className="w-full">
-          <form
-            onSubmit={handleEmit}
-            className="mb-4 w-full flex justify-between"
+    <div className="flex items-center flex-col h-full justify-between w-ful bg-indigo-200">
+      <div className="w-3/5 h-full my-8">
+        <div className="text-left w-full h-full">
+          <div
+            id="header"
+            className="pt-4 bg-indigo-300 rounded-t-lg px-4 drop-shadow-lg"
           >
-            <input
-              className="p-2 rounded-full w-full"
-              type="text"
-              name="message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-            />
-            <button
-              className="bg-indigo-500 hover:bg-indigo-500/75 focus:bg-indigo-500 ml-4 p-2 rounded-md"
-              type="submit"
-            >
-              Send
-            </button>
-          </form>
+            <div className="pb-1 flex items-end">
+              <h2>Box With Me</h2>
+              <p className="ml-2">{total} online</p>
+            </div>
+            <div>{joinRoom}</div>
+          </div>
+          <div id="body" className="bg-indigo-50 h-[80vh] drop-shadow-lg">
+            <div id="chats" className="h-full px-4">
+              {chats.length > 0 &&
+                chats.map((item, index) => {
+                  return <ChatBubble item={item} index={index} />;
+                })}
+            </div>
+            <div className="w-full bg-indigo-50 pb-4 rounded-b-lg drop-shadow-lg px-4">
+              <form
+                onSubmit={handleEmit}
+                className="w-full flex justify-between"
+              >
+                <input
+                  className="p-2 rounded-full w-full"
+                  type="text"
+                  name="message"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                />
+                <button
+                  className="bg-indigo-500 hover:bg-indigo-500/75 focus:bg-indigo-500 ml-4 p-2 rounded-md text-indigo-50"
+                  type="submit"
+                >
+                  Send
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
     </div>
